@@ -8,7 +8,7 @@ module.exports = class Config {
 	}
 
 	configure (options) {
-		this._LOCALES = _.get(options, "locale", []);
+		this._LOCALES = _.get(options, "LOCALES", []);
 		this._CACHE_MINUTES = _.get(options, "CACHE_MINUTES", 0);
 		this._WORKSPACE = _.get(options, "WORKSPACE", null);
 		this._BUCKET = _.get(options, "S3_BUCKET", null);
@@ -19,7 +19,7 @@ module.exports = class Config {
 
 	getConfiguration() {
 		return {
-			_LOCALE: this._LOCALE,
+			_LOCALES: this._LOCALES,
 			_CACHE_MINUTES: this._CACHE_MINUTES,
 			_WORKSPACE: this._WORKSPACE,
 			_BUCKET: this._BUCKET,

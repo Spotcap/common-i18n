@@ -1,0 +1,22 @@
+{
+  "name": "common-i18n",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./**/*.test.js"
+  },
+  "keywords": [],
+  "author": "Sahil Anand",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "lodash": "^4.7.0",
+    "moment": "^2.12.0",
+    "request": "^2.71.0"
+  },
+  "devDependencies": {
+    "assert": "^1.3.0",
+    "mocha": "^2.4.5"
+  }
+}

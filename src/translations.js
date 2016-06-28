@@ -109,7 +109,7 @@ module.exports = class Translation {
   }
 
   updateCache(locale, translations) {
-    this.translation[locale].va:qlue = translations;
+    this.translation[locale].value = translations;
     this.translation[locale].metadata.cache_time = moment();
   }
 };

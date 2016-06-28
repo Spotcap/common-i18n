@@ -11,9 +11,14 @@ module.exports = class Translation {
     this.cache_time = null;
     this.translation = {};
     this.config._LOCALES.map((locale)=> {
-      this.translation[locale] = {};
+      this.translation[locale] = {
+        value: {},
+        metadata: {
+          cache_time : null
+        }
+      };
     });
-    this.spwanTranslations();
+    this.spawnTranslations();
   }
 
   getTranslationByKeyAndLocale (key, dependentKeys, locale, cb) {
@@ -25,7 +30,7 @@ module.exports = class Translation {
       return cb(null, self.fetchKeyFromJSON(key, dependentKeys, locale));
     } else {
       // if cache cannot be used , serve it from previous cache and update it in background.
-      if (!_.isEmpty(self.translation[locale])) {
+      if (!_.isEmpty(self.translation[locale].value)) {
         self.downloadTranslationData(locale).then((response) => {
           self.updateCache(locale, response);
         }).catch((e) => {
@@ -51,8 +56,8 @@ module.exports = class Translation {
   }
 
   canUseCache (locale) {
-    return !_.isEmpty(this.translation[locale]) &&
-        this.cache_time.clone().add(this.config._CACHE_MINUTES, "minutes").isAfter(moment());
+    return !_.isEmpty(this.translation[locale].value) &&
+        this.translation[locale].metadata.cache_time.clone().add(this.config._CACHE_MINUTES, "minutes").isAfter(moment());
   }
 
   downloadTranslationData (locale) {
@@ -75,16 +80,16 @@ module.exports = class Translation {
     let data = {};
 
     dependentKeys.map((key)=> {
-      data[key] = this.translation[locale][key];
+      data[key] = this.translation[locale].value[key];
     });
 
-    data[key] = this.translation[locale][key];
+    data[key] = this.translation[locale].value[key];
     data.key = key;
 
     return data;
   }
 
-  spwanTranslations () {
+  spawnTranslations () {
     let self = this;
     let alpha = moment();
 
@@ -104,7 +109,7 @@ module.exports = class Translation {
   }
 
   updateCache(locale, translations) {
-    this.translation[locale] = translations;
-    this.cache_time = moment();
+    this.translation[locale].va:qlue = translations;
+    this.translation[locale].metadata.cache_time = moment();
   }
 };

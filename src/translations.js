@@ -91,64 +91,69 @@ module.exports = class Translation {
     return data;
   }
 
+  getTranslationsFromLokalise(){
+    let self = this;
+    var options = {
+      url: this.config._LOKALISE_BASE_URL+this.config._CEMBRA_PROJECT_ID+"/files/download",
+      headers: {
+          "x-api-token": this.config._LOKALISE_API_TOKEN
+      },
+      json: {
+          "format": "json",
+          "original_filenames": false
+      },
+      gzip: true
+    }
+    return request.post(options, function (err, data) {
+        if (err) {
+            return err;
+        }
+        else if (data.statusCode == 200) {
+            if (data.body.bundle_url) {
+              var reqOpts = {
+                method: "GET",
+                uri: data.body.bundle_url,
+                json: true,
+                encoding: null
+            }
+              request(reqOpts, function (err, res, body) {
+                if (err) {
+                  return err;
+                }
+                var zip = new AdmZip(body);
+                var zipEntries = zip.getEntries();
+                async.each(zipEntries, function (zipContent, callback) {
+                    if(!zipContent.isDirectory){
+                      if(zipContent.name!=="en.json"){
+                        var locale=zipContent.name.split('_')[0];
+                        if(locale=="de"){
+                          locale="ch";
+                        }
+                        self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
+                      }
+                      else{
+                        var locale=zipContent.name.split('.')[0];
+                        self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
+                      }
+                    }
+                }, function (err) {
+                    if (err) {
+                      return err;
+                    }
+                })
+            })
+            }
+        }
+    });
+  }
+
   spawnTranslations () {
     let self = this;
     let alpha = moment();
       console.info(`Spawning Translations started for ${self.config._LOCALES}`);
       Promise.map(self.config._LOCALES, (translationLocale) => {
         if(translationLocale.toLowerCase()=="ch"){
-          var options = {
-            url: this.config._LOKALISE_BASE_URL+this.config._CEMBRA_PROJECT_ID+"/files/download",
-            headers: {
-                "x-api-token": this.config._LOKALISE_API_TOKEN
-            },
-            json: {
-                "format": "json",
-                "original_filenames": false
-            },
-            gzip: true
-          }
-          return request.post(options, function (err, data) {
-              if (err) {
-                  return err;
-              }
-              else if (data.statusCode == 200) {
-                  if (data.body.bundle_url) {
-                    var reqOpts = {
-                      method: "GET",
-                      uri: data.body.bundle_url,
-                      json: true,
-                      encoding: null
-                  }
-                    request(reqOpts, function (err, res, body) {
-                      if (err) {
-                        return err;
-                      }
-                      var zip = new AdmZip(body);
-                      var zipEntries = zip.getEntries();
-                      async.each(zipEntries, function (zipContent, callback) {
-                          if(!zipContent.isDirectory){
-                            if(zipContent.name!=="en.json"){
-                              var locale=zipContent.name.split('_')[0];
-                              if(locale=="de"){
-                                locale="ch";
-                              }
-                              self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
-                            }
-                            else{
-                              var locale=zipContent.name.split('.')[0];
-                              self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
-                            }
-                          }
-                      }, function (err) {
-                          if (err) {
-                            return err;
-                          }
-                      })
-                  })
-                  }
-              }
-          });
+          self.getTranslationsFromLokalise();
         }
         else if(translationLocale.toLowerCase()!="fr" && translationLocale !="it" && translationLocale.toLowerCase()!="en"){
           return self.downloadTranslationData(translationLocale).then( (transations) => {
@@ -167,5 +172,5 @@ module.exports = class Translation {
   updateCache(locale, translations) {
     this.translation[locale].value = translations;
     this.translation[locale].metadata.cache_time = moment();
-  }
+  } 
 };

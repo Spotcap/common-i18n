@@ -94,75 +94,74 @@ module.exports = class Translation {
   spawnTranslations () {
     let self = this;
     let alpha = moment();
-    if(process.env.ORGANISATION=="CH"){
-      var options = {
-        url: this.config._LOKALISE_BASE_URL+this.config._CEMBRA_PROJECT_ID+"/files/download",
-        headers: {
-            "x-api-token": this.config._LOKALISE_API_TOKEN
-        },
-        json: {
-            "format": "json",
-            "original_filenames": false
-        },
-        gzip: true
-      }
-      request.post(options, function (err, data) {
-          if (err) {
-              return err;
+      console.info(`Spawning Translations started for ${self.config._LOCALES}`);
+      Promise.map(self.config._LOCALES, (translationLocale) => {
+        if(translationLocale.toLowerCase()=="ch"){
+          var options = {
+            url: this.config._LOKALISE_BASE_URL+this.config._CEMBRA_PROJECT_ID+"/files/download",
+            headers: {
+                "x-api-token": this.config._LOKALISE_API_TOKEN
+            },
+            json: {
+                "format": "json",
+                "original_filenames": false
+            },
+            gzip: true
           }
-          else if (data.statusCode == 200) {
-              if (data.body.bundle_url) {
-                var reqOpts = {
-                  method: "GET",
-                  uri: data.body.bundle_url,
-                  json: true,
-                  encoding: null
+          return request.post(options, function (err, data) {
+              if (err) {
+                  return err;
               }
-                request(reqOpts, function (err, res, body) {
-                  if (err) {
-                    return err;
+              else if (data.statusCode == 200) {
+                  if (data.body.bundle_url) {
+                    var reqOpts = {
+                      method: "GET",
+                      uri: data.body.bundle_url,
+                      json: true,
+                      encoding: null
                   }
-                  var zip = new AdmZip(body);
-                  var zipEntries = zip.getEntries();
-                  async.each(zipEntries, function (zipContent, callback) {
-                      if(!zipContent.isDirectory){
-                        if(zipContent.name!=="en.json"){
-                          var locale=zipContent.name.split('_')[0];
-                          if(locale=="de"){
-                            locale="ch";
-                          }
-                          self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
-                        }
-                        else{
-                          var locale=zipContent.name.split('.')[0];
-                          self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
-                        }
-                      }
-                  }, function (err) {
+                    request(reqOpts, function (err, res, body) {
                       if (err) {
                         return err;
                       }
+                      var zip = new AdmZip(body);
+                      var zipEntries = zip.getEntries();
+                      async.each(zipEntries, function (zipContent, callback) {
+                          if(!zipContent.isDirectory){
+                            if(zipContent.name!=="en.json"){
+                              var locale=zipContent.name.split('_')[0];
+                              if(locale=="de"){
+                                locale="ch";
+                              }
+                              self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
+                            }
+                            else{
+                              var locale=zipContent.name.split('.')[0];
+                              self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
+                            }
+                          }
+                      }, function (err) {
+                          if (err) {
+                            return err;
+                          }
+                      })
                   })
-              })
+                  }
               }
-          }
-      });
-    }
-    else{
-      console.info(`Spawning Translations started for ${self.config._LOCALES}`);
-      
-      Promise.map(self.config._LOCALES, (translationLocale) => {
-        return self.downloadTranslationData(translationLocale).then( (transations) => {
-          self.updateCache(translationLocale, transations);
-          console.info(`Spawning Translations finished for ${translationLocale}`);
-        });
+          });
+        }
+        else if(translationLocale.toLowerCase()!="fr" && translationLocale !="it" && translationLocale.toLowerCase()!="en"){
+          return self.downloadTranslationData(translationLocale).then( (transations) => {
+            self.updateCache(translationLocale, transations);
+            console.info(`Spawning Translations finished for ${translationLocale}`);
+          });
+        }
       }).then(() => {
         console.info(`Spawning Translations finished for ${self.config._LOCALES} in ${moment().diff(alpha)} ms`);
       }).catch((e) => {
         console.error(`Error while spawning translations ${e.stack}`);
         throw e.stack;
       });
-    }
   }
 
   updateCache(locale, translations) {

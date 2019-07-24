@@ -33,11 +33,17 @@ module.exports = class Translation {
     } else {
       // if cache cannot be used , serve it from previous cache and update it in background.
       if (!_.isEmpty(self.translation[locale].value)) {
-        self.downloadTranslationData(locale).then((response) => {
-          self.updateCache(locale, response);
-        }).catch((e) => {
-          console.error(`Error while downloading translations ${locale}, ${e.stack}`);
-        });
+        let cembraLocales=["ch","it","fr","en"];
+        if(cembraLocales.indexOf(locale)>-1){
+          this.getTranslationsFromLokalise();
+        }
+        else{
+          self.downloadTranslationData(locale).then((response) => {
+            self.updateCache(locale, response);
+          }).catch((e) => {
+            console.error(`Error while downloading translations ${locale}, ${e.stack}`);
+          });
+        }
 
         try {
           return cb(null, self.fetchKeyFromJSON(key, dependentKeys, locale));
@@ -46,13 +52,20 @@ module.exports = class Translation {
         };
       } else {
         // If cache cannot be used and no previous cache available download , update cache and serve it.
-        self.downloadTranslationData(locale).then((response) => {
-          self.updateCache(locale, response);
-          return cb(null, self.fetchKeyFromJSON(key, dependentKeys, locale));
-        }).catch((e) => {
-          console.error(`Error while downloading translations ${locale}, ${e.stack}`);
-          return cb(e, null);
-        });
+        let cembraLocales=["ch","it","fr","en"];
+        if(cembraLocales.indexOf(locale)>-1){
+          this.getTranslationsFromLokalise();
+        }
+        else{
+          self.downloadTranslationData(locale).then((response) => {
+            self.updateCache(locale, response);
+            return cb(null, self.fetchKeyFromJSON(key, dependentKeys, locale));
+          }).catch((e) => {
+            console.error(`Error while downloading translations ${locale}, ${e.stack}`);
+            return cb(e, null);
+          });
+        }
+        
       }
     }
   }
@@ -172,5 +185,7 @@ module.exports = class Translation {
   updateCache(locale, translations) {
     this.translation[locale].value = translations;
     this.translation[locale].metadata.cache_time = moment();
-  } 
+  }
+
+ 
 };

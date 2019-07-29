@@ -33,7 +33,7 @@ module.exports = class Translation {
     } else {
       // if cache cannot be used , serve it from previous cache and update it in background.
       if (!_.isEmpty(self.translation[locale].value)) {
-        let cembraLocales=["ch","it","fr","en"];
+        let cembraLocales=["chh","it","fr","en"];
         if(cembraLocales.indexOf(locale)>-1){
           this.getTranslationsFromLokalise();
         }
@@ -52,7 +52,7 @@ module.exports = class Translation {
         };
       } else {
         // If cache cannot be used and no previous cache available download , update cache and serve it.
-        let cembraLocales=["ch","it","fr","en"];
+        let cembraLocales=["chh","it","fr","en"];
         if(cembraLocales.indexOf(locale)>-1){
           this.getTranslationsFromLokalise();
         }
@@ -65,7 +65,7 @@ module.exports = class Translation {
             return cb(e, null);
           });
         }
-        
+
       }
     }
   }
@@ -165,7 +165,7 @@ module.exports = class Translation {
     let alpha = moment();
       console.info(`Spawning Translations started for ${self.config._LOCALES}`);
       Promise.map(self.config._LOCALES, (translationLocale) => {
-        if(translationLocale.toLowerCase()=="ch"){
+        if(translationLocale.toLowerCase()=="chh"){
           self.getTranslationsFromLokalise();
         }
         else if(translationLocale.toLowerCase()!="fr" && translationLocale !="it" && translationLocale.toLowerCase()!="en"){
@@ -187,5 +187,5 @@ module.exports = class Translation {
     this.translation[locale].metadata.cache_time = moment();
   }
 
- 
+
 };

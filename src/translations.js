@@ -26,16 +26,20 @@ module.exports = class Translation {
   getTranslationByKeyAndLocale (key, dependentKeys, locale, cb) {
     let self = this;
     locale = locale.toLowerCase();
-
+    locale = locale == "ch" ? "de" : locale;
     // If cache can be used, use it to serve translations;
     if (self.canUseCache(locale)) {
       return cb(null, self.fetchKeyFromJSON(key, dependentKeys, locale));
     } else {
       // if cache cannot be used , serve it from previous cache and update it in background.
       if (!_.isEmpty(self.translation[locale].value)) {
-        let cembraLocales=["ch","it","fr","en"];
+        let cembraLocales=["de","it","fr","en"];
         if(cembraLocales.indexOf(locale)>-1){
-          this.getTranslationsFromLokalise();
+          this.getTranslationsFromLokalise().then((response) => {
+            console.error("Translations downloaded successfully");
+          }).catch((e) => {
+            console.error(`Error while downloading translations ${locale}, ${e.stack}`);
+          });;
         }
         else{
           self.downloadTranslationData(locale).then((response) => {
@@ -52,9 +56,14 @@ module.exports = class Translation {
         };
       } else {
         // If cache cannot be used and no previous cache available download , update cache and serve it.
-        let cembraLocales=["ch","it","fr","en"];
+        let cembraLocales=["de","it","fr","en"];
         if(cembraLocales.indexOf(locale)>-1){
-          this.getTranslationsFromLokalise();
+          this.getTranslationsFromLokalise().then((response) => {
+            return cb(null, self.fetchKeyFromJSON(key, dependentKeys, locale));
+          }).catch((e) => {
+            console.error(`Error while downloading translations ${locale}, ${e.stack}`);
+            return cb(e, null);
+          });
         }
         else{
           self.downloadTranslationData(locale).then((response) => {
@@ -65,7 +74,7 @@ module.exports = class Translation {
             return cb(e, null);
           });
         }
-        
+
       }
     }
   }
@@ -117,9 +126,10 @@ module.exports = class Translation {
       },
       gzip: true
     }
-    return request.post(options, function (err, data) {
+    return new Promise((resolve,reject) => {
+      request.post(options, function (err, data) {
         if (err) {
-            return err;
+          return reject(err);
         }
         else if (data.statusCode == 200) {
             if (data.body.bundle_url) {
@@ -131,17 +141,14 @@ module.exports = class Translation {
             }
               request(reqOpts, function (err, res, body) {
                 if (err) {
-                  return err;
+                  return reject(err);
                 }
                 var zip = new AdmZip(body);
                 var zipEntries = zip.getEntries();
                 async.each(zipEntries, function (zipContent, callback) {
                     if(!zipContent.isDirectory){
-                      if(zipContent.name!=="en.json"){
+                      if(zipContent.name.indexOf("_")>-1){
                         var locale=zipContent.name.split('_')[0];
-                        if(locale=="de"){
-                          locale="ch";
-                        }
                         self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
                       }
                       else{
@@ -151,24 +158,41 @@ module.exports = class Translation {
                     }
                 }, function (err) {
                     if (err) {
-                      return err;
+                      return reject(err);
+                    }
+                    else{
+                      return resolve(body);
                     }
                 })
             })
             }
         }
-    });
+        else{
+          return reject("Downloading Translations failed");
+        }
+      })
+    })
   }
 
   spawnTranslations () {
     let self = this;
     let alpha = moment();
+    let counter=0;
       console.info(`Spawning Translations started for ${self.config._LOCALES}`);
       Promise.map(self.config._LOCALES, (translationLocale) => {
-        if(translationLocale.toLowerCase()=="ch"){
-          self.getTranslationsFromLokalise();
+        let cembraLocales=["de","it","fr","en"];
+        if(cembraLocales.indexOf(translationLocale)>-1){
+          if(counter>0){
+            return null;
+          }
+          else{
+            return self.getTranslationsFromLokalise().then((response) => {
+            }).catch((e) => {
+              console.error(`Error while downloading translations ${locale}, ${e.stack}`);
+            });
+          }
         }
-        else if(translationLocale.toLowerCase()!="fr" && translationLocale !="it" && translationLocale.toLowerCase()!="en"){
+        else{
           return self.downloadTranslationData(translationLocale).then( (transations) => {
             self.updateCache(translationLocale, transations);
             console.info(`Spawning Translations finished for ${translationLocale}`);
@@ -187,5 +211,4 @@ module.exports = class Translation {
     this.translation[locale].metadata.cache_time = moment();
   }
 
- 
 };

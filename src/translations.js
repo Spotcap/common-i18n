@@ -20,20 +20,32 @@ module.exports = class Translation {
         }
       };
     });
+    this.countryMap ={
+      "au" : "au",
+      "uk" : "uk",
+      "nl" :  "nl",
+      "nz" : "nz",
+      "at" : "at",
+      "ch" : "de",
+      "de" : "de",
+      "fr" : "fr_CH",
+      "it" : "it_CH",
+      "en" : "en_GB"
+    };
     this.spawnTranslations();
   }
 
   getTranslationByKeyAndLocale (key, dependentKeys, locale, cb) {
     let self = this;
     locale = locale.toLowerCase();
-    locale = locale == "ch" ? "de" : locale;
+    locale = this.countryMap[locale];
     // If cache can be used, use it to serve translations;
     if (self.canUseCache(locale)) {
       return cb(null, self.fetchKeyFromJSON(key, dependentKeys, locale));
     } else {
       // if cache cannot be used , serve it from previous cache and update it in background.
       if (!_.isEmpty(self.translation[locale].value)) {
-        let cembraLocales=["de","it","fr","en"];
+        let cembraLocales=["de","it_CH","fr_CH","en_GB"];
         if(cembraLocales.indexOf(locale)>-1){
           this.getTranslationsFromLokalise().then((response) => {
             console.error("Translations downloaded successfully");
@@ -147,14 +159,8 @@ module.exports = class Translation {
                 var zipEntries = zip.getEntries();
                 async.each(zipEntries, function (zipContent, callback) {
                     if(!zipContent.isDirectory){
-                      if(zipContent.name.indexOf("_")>-1){
-                        var locale=zipContent.name.split('_')[0];
-                        self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
-                      }
-                      else{
-                        var locale=zipContent.name.split('.')[0];
-                        self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
-                      }
+                      var locale=zipContent.name.split('.')[0];
+                      self.updateCache(locale,JSON.parse(zipContent.getData().toString()));
                     }
                 }, function (err) {
                     if (err) {
@@ -180,7 +186,7 @@ module.exports = class Translation {
     let counter=0;
       console.info(`Spawning Translations started for ${self.config._LOCALES}`);
       Promise.map(self.config._LOCALES, (translationLocale) => {
-        let cembraLocales=["de","it","fr","en"];
+        let cembraLocales=["de","it_CH","fr_CH","en_GB"];
         if(cembraLocales.indexOf(translationLocale)>-1){
           if(counter>0){
             return null;
@@ -210,5 +216,4 @@ module.exports = class Translation {
     this.translation[locale].value = translations;
     this.translation[locale].metadata.cache_time = moment();
   }
-
 };

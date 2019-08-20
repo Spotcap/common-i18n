@@ -68,7 +68,7 @@ module.exports = class Translation {
         };
       } else {
         // If cache cannot be used and no previous cache available download , update cache and serve it.
-        let cembraLocales=["de","it","fr","en"];
+        let cembraLocales=["de","it_CH","fr_CH","en_GB"];
         if(cembraLocales.indexOf(locale)>-1){
           this.getTranslationsFromLokalise().then((response) => {
             return cb(null, self.fetchKeyFromJSON(key, dependentKeys, locale));

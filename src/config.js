@@ -27,7 +27,6 @@ module.exports = class Config {
       _CEMBRA_PROJECT_ID : this._CEMBRA_PROJECT_ID,
       _LOKALISE_API_TOKEN : this._LOKALISE_API_TOKEN,
       _S3: new aws.S3({
-        region: this._REGION,
         params: {
           Bucket: this._BUCKET
         }

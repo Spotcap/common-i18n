@@ -71,8 +71,6 @@ module.exports = class Translation {
   }
 
   canUseCache (locale) {
-    console.log(this.translation);
-    console.log(this.locale);
     return !_.isEmpty(this.translation[locale].value) &&
         this.translation[locale].metadata.cache_time.clone().add(this.config._CACHE_MINUTES, "minutes").isAfter(moment());
   }

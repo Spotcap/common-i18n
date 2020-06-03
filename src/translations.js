@@ -194,7 +194,7 @@ module.exports = class Translation {
           else{
             return self.getTranslationsFromLokalise().then((response) => {
             }).catch((e) => {
-              console.error(`Error while downloading translations ${locale}, ${e.stack}`);
+              console.error(`Error while downloading translations ${translationLocale}, ${e.stack}`);
             });
           }
         }

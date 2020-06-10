@@ -134,7 +134,8 @@ module.exports = class Translation {
       },
       json: {
           "format": "json",
-          "original_filenames": false
+          "original_filenames": false,
+          "exclude_tags": ["Partner Portal"]
       },
       gzip: true
     }

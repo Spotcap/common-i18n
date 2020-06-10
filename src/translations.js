@@ -140,6 +140,8 @@ module.exports = class Translation {
     }
     return new Promise((resolve,reject) => {
       request.post(options, function (err, data) {
+        console.log("error",err);
+        console.log("data",data);
         if (err) {
           return reject(err);
         }

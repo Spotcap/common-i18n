@@ -37,12 +37,15 @@ module.exports = class Translation {
         if(cembraLocales.indexOf(locale)>-1){
           this.getTranslationsFromLokalise();
         }
-        else{
+        else if(["au","nz"].indexOf(locale)>-1){
           self.downloadTranslationData(locale).then((response) => {
             self.updateCache(locale, response);
           }).catch((e) => {
             console.error(`Error while downloading translations ${locale}, ${e.stack}`);
           });
+        }
+        else{
+          return {};
         }
 
         try {

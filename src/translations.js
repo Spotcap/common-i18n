@@ -141,7 +141,6 @@ module.exports = class Translation {
     }
     return new Promise((resolve,reject) => {
       request.post(options, function (err, data) {
-        console.log("data",data.body);
         if (err) {
           return reject(err);
         }
